@@ -1,0 +1,67 @@
+
+logging:
+  level:
+    com:
+      datastax:
+        driver:
+          core:
+            Cluster: info
+            HostConnectionPool: off
+            Session: off
+    akka:
+      actor: debug
+    io:
+      geoant: debug
+    org:
+      apache:
+        kafka:
+          consumer:
+            ConsumerConfig: off
+
+spring:
+  data:
+    cassandra:
+      cluster-name: geoant
+#      contact-points: geoant-cassandra.geoant
+#      contact-points: localhost
+      contact-points: tcp.cloudolympus.io
+#      port: 9042
+      port: 1042
+    #    jest: https://tcp.cloudolympus.io:1092
+    elasticsearch:
+      cluster-nodes: tcp.cloudolympus.io:1092
+#      cluster-nodes: geoant-service.geoant:9200
+  cloud:
+    stream:
+      default-binder: kafka
+  kafka:
+    bootstrap-servers: tcp.cloudolympus.io:1070,tcp.cloudolympus.io:1071,tcp.cloudolympus.io:1072
+#    bootstrap-servers: bootstrap.kafka:9092
+  main:
+    web-application-type: reactive
+
+server:
+  port: 8080
+
+
+spark:
+  appName: track-streams
+#  master: local
+  master: k8s://https://tcp.cloudolympus.io:1080
+#  mode: client
+  mode: cluster
+  kubernetes:
+     namespace: default
+     driver:
+        docker:
+           image: kubespark/spark-driver:v2.2.0-kubernetes-0.5.0
+     executor:
+        docker:
+           image: kubespark/spark-executor:v2.2.0-kubernetes-0.5.0
+     initcontainer:
+        docker:
+           image: kubespark/spark-init:v2.2.0-kubernetes-0.5.0
+     resourceStagingServer:
+        uri: https://tcp.cloudolympus.io:1031
+
+
