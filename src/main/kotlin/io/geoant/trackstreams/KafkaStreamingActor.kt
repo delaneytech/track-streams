@@ -5,7 +5,6 @@ import akka.actor.ActorRef
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 import akka.japi.pf.ReceiveBuilder
-import com.databricks.spark.avro.SchemaConverters
 import com.databricks.spark.xml.XmlReader
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.Column
@@ -13,6 +12,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.RowFactory
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.api.java.UDF1
+import org.apache.spark.sql.functions.callUDF
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.types.Metadata
@@ -24,10 +25,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
 import java.util.*
-import org.apache.spark.sql.functions.callUDF
-import org.apache.spark.sql.functions.col
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.ArrayList
 import net.simon04.jelementtree.ElementTree as ET
 
 @Component
@@ -42,7 +40,6 @@ class KafkaStreamingActor : AbstractLoggingActor {
     var sqlc: SQLContext
     var sc: JavaSparkContext
     var ssc: JavaStreamingContext
-//    var count: Long = 0
 
     val mediator = DistributedPubSub.get(context.system).mediator()
 
