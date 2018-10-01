@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.WebApplicationType
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
