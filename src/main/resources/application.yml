@@ -22,21 +22,19 @@ spring:
   data:
     cassandra:
       cluster-name: geoant
-      contact-points: geoant-cassandra.geoant
-#      contact-points: localhost
+#      contact-points: geoant-cassandra.geoant
       contact-points: tcp.cloudolympus.io
-      port: 9042
-#      port: 1042
+#      port: 9042
+      port: 1042
     #    jest: https://tcp.cloudolympus.io:1092
     elasticsearch:
       cluster-nodes: tcp.cloudolympus.io:1092
-#      cluster-nodes: geoant-service.geoant:9200
   cloud:
     stream:
       default-binder: kafka
   kafka:
-#    bootstrap-servers: tcp.cloudolympus.io:1070,tcp.cloudolympus.io:1071,tcp.cloudolympus.io:1072
-    bootstrap-servers: bootstrap.kafka:9092
+    bootstrap-servers: tcp.cloudolympus.io:1070,tcp.cloudolympus.io:1071,tcp.cloudolympus.io:1072
+#    bootstrap-servers: bootstrap.kafka:9092
   main:
     web-application-type: reactive
 

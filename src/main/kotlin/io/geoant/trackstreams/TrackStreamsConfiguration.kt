@@ -148,13 +148,15 @@ class TrackStreamsConfiguration {
 
         val sparkConf: SparkConf = SparkConf()
         sparkConf.setAppName(appName)
-        sparkConf.setMaster("k8s://https://tcp.cloudolympus.io:1080")
-//        sparkConf.setMaster("local")
+//        sparkConf.setMaster("k8s://https://tcp.cloudolympus.io:1080")
+        sparkConf.setMaster("local")
 //        sparkConf.setMaster(master)
 //        sparkConf.set("spark.cassandra.connection.host", host[0])
 //        sparkConf.set("spark.cassandra.connection.port", port.toString())
-//        sparkConf.set("spark.cassandra.connection.port", "geoant-cassandra.geoant")
+//        sparkConf.set("spark.cassandra.connection.host", "geoant-cassandra.geoant")
 //        sparkConf.set("spark.cassandra.connection.port", "9042")
+        sparkConf.set("spark.cassandra.connection.host", "tcp.cloudolympus.io")
+        sparkConf.set("spark.cassandra.connection.port", "1042")
         return sparkConf
     }
 
@@ -168,8 +170,8 @@ class TrackStreamsConfiguration {
 
         return StreamsConfig(mapOf(
                 StreamsConfig.APPLICATION_ID_CONFIG to appName,
-//                StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrap
-                StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to "bootstrap.kafka:9092"
+                StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrap
+//                StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to "bootstrap.kafka:9092"
         ))
     }
 
@@ -179,8 +181,8 @@ class TrackStreamsConfiguration {
 
     @Bean
     fun serverStart(cluster: Cluster, management: AkkaManagement, bootstrap: ClusterBootstrap): String {
-        management.start()
-        bootstrap.start()
+//        management.start()
+//        bootstrap.start()
         return "Management and Bootstrap Started"
     }
 

@@ -6,6 +6,11 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 import akka.japi.pf.ReceiveBuilder
 import com.databricks.spark.xml.XmlReader
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Session
+import com.datastax.spark.connector.cql.CassandraConnector
+import com.datastax.spark.connector.cql.CassandraConnectorConf
+import com.datastax.spark.connector.japi.CassandraJavaUtil
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.Row
@@ -26,6 +31,7 @@ import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import javax.xml.transform.Result
 import net.simon04.jelementtree.ElementTree as ET
 
 @Component
@@ -53,6 +59,8 @@ class KafkaStreamingActor : AbstractLoggingActor {
         this.sc = ssc.sparkContext()
         this.ssc = ssc
         this.sqlc = SQLContext(ssc.sparkContext())
+
+        Parser.init(sc)
 
         val xmlStream = this.sqlc.readStream().format("kafka")
 //                .option("kafka.bootstrap.servers", kProps.bootstrapServers.joinToString (separator = ","))
@@ -85,7 +93,7 @@ class KafkaStreamingActor : AbstractLoggingActor {
 
         while (queryDf.isActive) {
 
-            Parser.files.forEach {
+            Parser.entries().forEach {
 
                 if (it.value) {
 
@@ -116,12 +124,12 @@ class KafkaStreamingActor : AbstractLoggingActor {
                     mediator.tell(DistributedPubSubMediator.Send("/user/elastic-writer", json.toString(), false), self)
 
                     log().info("Reset Parser...")
-                    Parser.files.remove(it.key)
+                    Parser.delete(it.key)
 
                     queryDfTable.show()
                 }
 
-            Thread.sleep(10000)
+                Thread.sleep(10000)
             }
         }
 
@@ -130,24 +138,62 @@ class KafkaStreamingActor : AbstractLoggingActor {
 
     object XmlParser : UDF1<String, Row> {
 
-        var id = UUID.randomUUID()
+        var id: UUID? = null
 
         override fun call(t1: String?): Row {
             val line = t1!!.split("\"text/plain\"")[1].trim()
             if (line.contains("\"mark\":\"START\"")) {
                 id = UUID.randomUUID()
-                Parser.files.put(id.toString(), false)
-            }
-            if (line.contains("\"mark\":\"END\"")) {
-                Parser.files.put(id.toString(), true)
-            }
+                Parser.create(id.toString(), false)
+            } else
+                if (line.contains("\"mark\":\"END\"")) {
+                    Parser.update(id.toString(), true)
+                }
 
             return RowFactory.create(id.toString(), line)
         }
     }
 
     object Parser {
-        var files = ConcurrentHashMap<String, Boolean>()
+//        CassandraJavaUtil.javaFunctions(xmlDf.javaRDD()).writerBuilder("lake", "tracks", mapToRow(Row::class.java)).saveToCassandra()
+
+        private var sc: JavaSparkContext? = null
+        private var connector: CassandraConnector? = null
+        private var keyspace = "lake"
+        private var table = "file_processing_index"
+
+        fun init(sc: JavaSparkContext) {
+            this.sc = sc
+            connector = CassandraConnector.apply(this.sc?.conf)
+            connector!!.openSession().execute("CREATE TABLE IF NOT EXISTS $keyspace.$table(key text PRIMARY KEY, value Boolean)")
+        }
+
+        fun entries(): ConcurrentHashMap<String, Boolean> {
+
+            var map = ConcurrentHashMap<String, Boolean>()
+
+            connector!!.openSession().execute("SELECT key, value FROM $keyspace.$table WHERE value = true ALLOW FILTERING").forEach {
+                map.put(it.getString(0), it.getBool(1))
+            }
+
+            return map
+        }
+
+        fun create(key: String, value: Boolean) {
+
+            connector!!.openSession().execute("INSERT INTO $keyspace.$table (key, value) VALUES ('$key', $value)")
+        }
+
+        fun update(key: String, value: Boolean) {
+
+            connector!!.openSession().execute("UPDATE $keyspace.$table SET value = $value WHERE key = '$key'")
+        }
+
+        fun delete(key: String) {
+
+            connector!!.openSession().execute("DELETE FROM $keyspace.$table WHERE key = '$key'")
+        }
+
     }
 
 }
